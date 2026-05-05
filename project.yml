@@ -1,0 +1,40 @@
+name: PrivacyMessenger
+options:
+  bundleIdPrefix: com.vardchat
+  deploymentTarget:
+    iOS: "16.0"
+  generateEmptyDirectories: true
+  createIntermediateGroups: true
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    IPHONEOS_DEPLOYMENT_TARGET: "16.0"
+    CODE_SIGNING_ALLOWED: NO
+    CODE_SIGNING_REQUIRED: NO
+    ENABLE_BITCODE: NO
+
+targets:
+  PrivacyMessenger:
+    type: application
+    platform: iOS
+    deploymentTarget: "16.0"
+    sources:
+      - path: PrivacyMessenger
+    settings:
+      base:
+        OTHER_LDFLAGS: "$(inherited) -ObjC"
+    info:
+      properties:
+        CFBundleIdentifier: com.vardchat.app
+        CFBundleVersion: "1"
+        CFBundleShortVersionString: "1.0.0"
+        UIBackgroundModes: [voip, audio]
+        NSMicrophoneUsageDescription: "This app requires microphone access for voice calls."
+        NSCameraUsageDescription: "This app requires camera access for video calls."
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        UIRequiredDeviceCapabilities:
+          - arm64
+    scheme:
+      testTargets: []

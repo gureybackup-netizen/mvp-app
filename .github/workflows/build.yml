@@ -1,0 +1,48 @@
+name: Build IPA
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select latest Xcode
+        run: |
+          XCODE=$(find /Applications -maxdepth 1 -name "Xcode*.app" | sort -V | tail -1)
+          sudo xcode-select -s "$XCODE"
+          echo "Using Xcode: $XCODE"
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Project
+        run: xcodegen generate --spec project.yml
+
+      - name: Build App
+        run: |
+          xcodebuild build \
+            -scheme PrivacyMessenger \
+            -sdk iphoneos \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_IDENTITY=""
+
+      - name: Package IPA
+        run: |
+          mkdir -p Payload
+          cp -r build/Build/Products/Release-iphoneos/PrivacyMessenger.app Payload/
+          zip -r PrivacyMessenger.ipa Payload/
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: PrivacyMessenger-IPA
+          path: PrivacyMessenger.ipa
+          retention-days: 30
