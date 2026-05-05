@@ -1,4 +1,10 @@
 name: PrivacyMessenger
+
+packages:
+  MatrixSDK:
+    url: https://github.com/matrix-org/matrix-ios-sdk
+    majorVersion: 0
+
 options:
   bundleIdPrefix: com.vardchat
   deploymentTarget:
@@ -21,6 +27,9 @@ targets:
     deploymentTarget: "16.0"
     sources:
       - path: PrivacyMessenger
+    dependencies:
+      - package: MatrixSDK
+        product: MatrixSDK
     settings:
       base:
         OTHER_LDFLAGS: "$(inherited) -ObjC"
