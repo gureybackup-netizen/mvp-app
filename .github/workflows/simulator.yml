@@ -1,0 +1,51 @@
+name: Build Simulator App
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select latest Xcode
+        run: |
+          XCODE=$(find /Applications -maxdepth 1 -name "Xcode*.app" | sort -V | tail -1)
+          sudo xcode-select -s "$XCODE"
+          echo "Using Xcode: $XCODE"
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Project
+        run: xcodegen generate --spec project.yml
+
+      - name: Build App for Simulator
+        run: |
+          xcodebuild build \
+            -scheme PrivacyMessenger \
+            -sdk iphonesimulator \
+            -configuration Release \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_IDENTITY=""
+
+      - name: Package Simulator App
+        run: |
+          # For Appetize.io, we need to zip the .app bundle directly
+          cd build/Build/Products/Release-iphonesimulator
+          zip -r ../../../vard-app-simulator.zip PrivacyMessenger.app
+
+      - name: Upload Simulator Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vard-app-simulator
+          path: vard-app-simulator.zip
+          retention-days: 30
