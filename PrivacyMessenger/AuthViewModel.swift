@@ -10,15 +10,16 @@ class AuthViewModel: ObservableObject {
     
     private let sessionManager = SessionManager.shared
     private let storeID = "primary_user_store"
+    private let homeserverUrl = "https://matrix.org"
     
     func register(username: String, password: String) async {
         isLoading = true
         errorMessage = nil
         
         do {
-            let client = try await createClient()
-            try await client.register(username: username, password: password)
-            try await login(username: username, password: password)
+            // Registration must be done via REST API as the Rust Client requires an existing session
+            try await performRestRegistration(username: username, password: password)
+            await login(username: username, password: password)
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -33,7 +34,7 @@ class AuthViewModel: ObservableObject {
             let client = try await createClient()
             try await client.login(username: username, password: password, initialDeviceName: "PrivacyMessenger", deviceId: nil)
             
-            let session = client.session()
+            let session = try client.session()
             sessionManager.currentClient = client
             sessionManager.save(token: session.accessToken, userId: session.userId)
             
@@ -49,8 +50,18 @@ class AuthViewModel: ObservableObject {
         guard let (token, userId) = sessionManager.load() else { return }
         do {
             let client = try await createClient()
-            // In Rust SDK, restoring usually involves the session object or the token
-            // For simplicity in this MVP, we check if the client can start with existing data
+            
+            let session = Session(
+                accessToken: token,
+                refreshToken: nil,
+                userId: userId,
+                deviceId: nil,
+                homeserverUrl: homeserverUrl,
+                oidcData: nil,
+                slidingSyncVersion: .native
+            )
+            try await client.restoreSession(session: session)
+            
             sessionManager.currentClient = client
             isLoggedIn = true
             currentUserID = userId
@@ -67,12 +78,34 @@ class AuthViewModel: ObservableObject {
     
     private func createClient() async throws -> Client {
         return try await ClientBuilder()
-            .serverNameOrHomeserverUrl(serverNameOrUrl: "matrix.org")
+            .serverNameOrHomeserverUrl(serverNameOrUrl: homeserverUrl)
             .sessionPaths(
                 dataPath: URL.applicationSupportDirectory.appending(path: "matrix/data/\(storeID)").path,
                 cachePath: URL.cachesDirectory.appending(path: "matrix/cache/\(storeID)").path
             )
             .slidingSyncVersionBuilder(versionBuilder: .discoverNative)
             .build()
+    }
+    
+    private func performRestRegistration(username: String, password: String) async throws {
+        guard let url = URL(string: "\(homeserverUrl)/_matrix/client/r0/register") else {
+            throw NSError(domain: "Auth", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid registration URL"])
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let body: [String: Any] = [
+            "username": username,
+            "password": password
+        ]
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        
+        let (_, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode) else {
+            throw NSError(domain: "Auth", code: 1, userInfo: [NSLocalizedDescriptionKey: "Registration failed. Username might be taken."])
+        }
     }
 }
