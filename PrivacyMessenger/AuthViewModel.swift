@@ -73,6 +73,7 @@ class AuthViewModel: ObservableObject {
             
             isLoggedIn = true
             currentUserID = session.userId
+            SyncService.shared.startSync()
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -98,6 +99,7 @@ class AuthViewModel: ObservableObject {
             sessionManager.currentClient = client
             isLoggedIn = true
             currentUserID = userId
+            SyncService.shared.startSync()
         } catch {
             sessionManager.clear()
         }

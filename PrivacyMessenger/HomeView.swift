@@ -3,6 +3,8 @@ import SwiftUI
 struct HomeView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
     @EnvironmentObject var chatViewModel: ChatViewModel
+    @State private var activeRoomId: String?
+    @State private var activeUserName: String = ""
     
     var body: some View {
         NavigationStack {
@@ -83,9 +85,16 @@ struct HomeView: View {
                             }
                             Spacer()
                             
-                            // This button will be the entry point for Milestone 2 (Room Creation)
                             Button("Start Chat") {
-                                // To be implemented in Milestone 2
+                                Task {
+                                    do {
+                                        let roomId = try await chatViewModel.createChatRoom(with: foundUser)
+                                        activeRoomId = roomId
+                                        activeUserName = foundUser
+                                    } catch {
+                                        chatViewModel.errorMessage = error.localizedDescription
+                                    }
+                                }
                             }
                             .buttonStyle(.borderedProminent)
                             .controlSize(.small)
@@ -126,6 +135,17 @@ struct HomeView: View {
                 .padding()
             }
             .navigationTitle("Home")
+            .navigationDestination(isPresented: Binding(
+                get: { activeRoomId != nil },
+                set: { if !$0 { activeRoomId = nil } }
+            )) {
+                if let roomId = activeRoomId {
+                    ChatView(roomId: roomId, userName: activeUserName)
+                        .environmentObject(chatViewModel)
+                } else {
+                    Text("Empty Room")
+                }
+            }
             .animation(.spring(), value: chatViewModel.foundUser)
             .animation(.spring(), value: chatViewModel.errorMessage)
         }

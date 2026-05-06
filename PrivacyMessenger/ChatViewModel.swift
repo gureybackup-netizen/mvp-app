@@ -1,5 +1,13 @@
 import Foundation
 import MatrixRustSDK
+import Combine
+
+struct ChatMessage: Identifiable {
+    let id: String
+    let roomId: String
+    let text: String
+    let isFromMe: Bool
+}
 
 @MainActor
 class ChatViewModel: ObservableObject {
@@ -8,12 +16,29 @@ class ChatViewModel: ObservableObject {
     @Published var isSearching = false
     @Published var errorMessage: String?
     
+    @Published var messages: [ChatMessage] = []
+    @Published var currentMessage = ""
+    
+    private var cancellables = Set<AnyCancellable>()
     private let sessionManager = SessionManager.shared
+    
+    init() {
+        setupSyncSubscription()
+    }
+    
+    private func setupSyncSubscription() {
+        SyncService.shared.messagePublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] message in
+                self?.messages.append(message)
+            }
+            .store(in: &cancellables)
+    }
     
     func searchUser() async {
         guard !searchUserID.isEmpty else { return }
         
-        isLoading()
+        isLoading(true)
         errorMessage = nil
         foundUser = nil
         
@@ -22,16 +47,8 @@ class ChatViewModel: ObservableObject {
                 throw NSError(domain: "Chat", code: 0, userInfo: [NSLocalizedDescriptionKey: "User not logged in"])
             }
             
-            // In Matrix Rust SDK, we typically resolve a user by their ID
-            // Note: Actual SDK method name might be `resolveUser` or similar
-            // For now, we implement the logic to check if the user exists
-            
-            // The SDK uses async calls for this. 
-            // We are simulating the resolution here as we refine the exact SDK call
-            // based on the specific version 2916f3f.
-            
-            // Simulation of user resolution:
-            try await Task.sleep(nanoseconds: 1_000_000_000) // 1 sec delay
+            // Simulate user resolution
+            try await Task.sleep(nanoseconds: 1_000_000_000)
             
             if searchUserID.contains("@") && searchUserID.contains(":") {
                 foundUser = searchUserID
@@ -46,7 +63,55 @@ class ChatViewModel: ObservableObject {
         isLoading(false)
     }
     
-    private func isLoading(_ value: Bool = true) {
+    func createChatRoom(with userId: String) async throws -> String {
+        guard let client = sessionManager.currentClient else {
+            throw NSError(domain: "Chat", code: 0, userInfo: [NSLocalizedDescriptionKey: "User not logged in"])
+        }
+        
+        do {
+            // Create a private room and invite the user
+            // The SDK's createRoom returns the roomId
+            let room = try await client.createRoom(
+                name: "Private Chat",
+                isPublic: false,
+                inviteUsers: [userId]
+            )
+            
+            return room.roomId
+        } catch {
+            throw NSError(domain: "Chat", code: 2, userInfo: [NSLocalizedDescriptionKey: "Failed to create room: \(error.localizedDescription)"])
+        }
+    }
+    
+    func sendMessage(text: String, to roomId: String) async {
+        guard !text.isEmpty else { return }
+        
+        do {
+            guard let client = sessionManager.currentClient else { return }
+            
+            // Send the message through the SDK
+            try await client.sendEvent(
+                roomId: roomId,
+                eventType: "m.room.message",
+                content: ["body": text]
+            )
+            
+            // Local echo for immediate UI update
+            let newMessage = ChatMessage(
+                id: UUID().uuidString,
+                roomId: roomId,
+                text: text,
+                isFromMe: true
+            )
+            messages.append(newMessage)
+            currentMessage = ""
+            
+        } catch {
+            print("Send error: \(error.localizedDescription)")
+        }
+    }
+    
+    private func isLoading(_ value: Bool) {
         isSearching = value
     }
 }
