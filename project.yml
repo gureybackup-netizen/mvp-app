@@ -3,7 +3,6 @@ name: PrivacyMessenger
 packages:
   MatrixSDK:
     url: https://github.com/matrix-org/matrix-ios-sdk
-    majorVersion: 0
 
 options:
   bundleIdPrefix: com.vardchat
