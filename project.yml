@@ -36,7 +36,7 @@ targets:
     info:
       path: PrivacyMessenger/Info.plist
       properties:
-        CFBundleIdentifier: com.vardchat.app
+         CFBundleIdentifier: com.vardchat.PrivacyMessenger
         CFBundleVersion: "1"
         CFBundleShortVersionString: "1.0.0"
         UIBackgroundModes: [voip, audio]

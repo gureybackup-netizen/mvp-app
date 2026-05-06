@@ -43,7 +43,7 @@ class ChatViewModel: ObservableObject {
         foundUser = nil
         
         do {
-            guard let client = sessionManager.currentClient else {
+            guard sessionManager.currentClient != nil else {
                 throw NSError(domain: "Chat", code: 0, userInfo: [NSLocalizedDescriptionKey: "User not logged in"])
             }
             
@@ -90,7 +90,7 @@ class ChatViewModel: ObservableObject {
         guard !text.isEmpty else { return }
         
         do {
-            guard let client = sessionManager.currentClient else { return }
+            guard sessionManager.currentClient != nil else { return }
             
             // The SDK's sendEvent method may be named differently or located elsewhere.
             // To ensure the build is green, we'll implement a local echo and mark the SDK call for refinement.
@@ -104,11 +104,8 @@ class ChatViewModel: ObservableObject {
                 isFromMe: true
             )
             messages.append(newMessage)
-            currentMessage = ""
-            
-        } catch {
-            print("Send error: \(error.localizedDescription)")
-        }
+                currentMessage = ""
+            }
     }
     
     private func isLoading(_ value: Bool) {
