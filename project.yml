@@ -1,9 +1,9 @@
 name: PrivacyMessenger
 
 packages:
-  MatrixSDKPackage:
-    url: "https://github.com/matrix-org/matrix-ios-sdk"
-    branch: "master"
+  MatrixRustSDK:
+    url: "https://github.com/matrix-org/matrix-rust-components-swift"
+    from: "main"
 
 options:
   bundleIdPrefix: com.vardchat
@@ -28,8 +28,8 @@ targets:
     sources:
       - path: PrivacyMessenger
     dependencies:
-      - package: MatrixSDKPackage
-        product: MatrixSDK
+      - package: MatrixRustSDK
+        product: MatrixRustSDK
     settings:
       base:
         OTHER_LDFLAGS: "$(inherited) -ObjC"

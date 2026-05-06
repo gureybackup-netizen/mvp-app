@@ -1,34 +1,28 @@
 import Foundation
-import MatrixSDK
+import MatrixRustSDK
 
 class SessionManager {
     static let shared = SessionManager()
-    var currentSession: MXSession?
+    var currentClient: MatrixClient?
     
     private let serviceName = "com.vardchat.app.auth"
     
     private init() {}
     
-    func save(credentials: MXCredentials) {
-        do {
-            let data = try JSONEncoder().encode(credentials)
+    func save(token: String, userId: String) {
+        let credentials = ["token": token, "userId": userId]
+        if let data = try? JSONEncoder().encode(credentials) {
             let query: [String: Any] = [
                 kSecClass as String: kSecClassGenericPassword,
                 kSecAttrService as String: serviceName,
                 kSecValueData as String: data
             ]
-            
             SecItemDelete(query as CFDictionary)
-            let status = SecItemAdd(query as CFDictionary, nil)
-            if status != errSecSuccess {
-                print("Keychain save failed: \(status)")
-            }
-        } catch {
-            print("Failed to encode credentials: \(error)")
+            SecItemAdd(query as CFDictionary, nil)
         }
     }
     
-    func load() -> MXCredentials? {
+    func load() -> (token: String, userId: String)? {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: serviceName,
@@ -39,16 +33,13 @@ class SessionManager {
         var result: AnyObject?
         let status = SecItemCopyMatching(query as CFDictionary, &result)
         
-        guard status == errSecSuccess, let data = result as? Data else {
+        guard status == errSecSuccess, let data = result as? Data,
+              let creds = try? JSONDecoder().decode([String: String].self, from: data),
+              let token = creds["token"], let userId = creds["userId"] else {
             return nil
         }
         
-        do {
-            return try JSONDecoder().decode(MXCredentials.self, from: data)
-        } catch {
-            print("Failed to decode credentials: \(error)")
-            return nil
-        }
+        return (token, userId)
     }
     
     func clear() {
@@ -57,9 +48,6 @@ class SessionManager {
             kSecAttrService as String: serviceName
         ]
         SecItemDelete(query as CFDictionary)
-        currentSession = nil
+        currentClient = nil
     }
 }
-
-// Extension to make MXCredentials Codable for easier Keychain storage
-extension MXCredentials: Codable {}
