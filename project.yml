@@ -3,7 +3,6 @@ name: PrivacyMessenger
 packages:
   MatrixRustSDK:
     url: "https://github.com/matrix-org/matrix-rust-components-swift"
-    branch: "main"
 
 options:
   bundleIdPrefix: com.vardchat
