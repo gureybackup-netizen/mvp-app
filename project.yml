@@ -1,9 +1,9 @@
 name: PrivacyMessenger
 
 packages:
-  MatrixSDK:
-    url: https://github.com/matrix-org/matrix-ios-sdk
-    from: master
+  MatrixSDKPackage:
+    url: "https://github.com/matrix-org/matrix-ios-sdk"
+    from: "master"
 
 options:
   bundleIdPrefix: com.vardchat
@@ -28,12 +28,13 @@ targets:
     sources:
       - path: PrivacyMessenger
     dependencies:
-      - package: MatrixSDK
+      - package: MatrixSDKPackage
         product: MatrixSDK
     settings:
       base:
         OTHER_LDFLAGS: "$(inherited) -ObjC"
     info:
+      path: PrivacyMessenger/Info.plist
       properties:
         CFBundleIdentifier: com.vardchat.app
         CFBundleVersion: "1"
