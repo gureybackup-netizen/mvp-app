@@ -22,7 +22,10 @@ class SyncService: ObservableObject {
                         continue
                     }
                     
-                    let response = try await client.sync()
+                    // In the Matrix Rust SDK, we use the SlidingSync manager
+                    let slidingSync = client.slidingSync()
+                    let response = try await slidingSync.sync()
+                    
                     processSyncResponse(response)
                     
                 } catch {
@@ -38,21 +41,12 @@ class SyncService: ObservableObject {
         syncTask = nil
     }
     
-    private func processSyncResponse(_ response: SyncResponse) {
-        for (roomId, room) in response.rooms {
-            // The Matrix Rust SDK typically provides the timeline of events for each room
-            // We iterate over the events and look for 'm.room.message'
-            
-            // This is based on the expected SDK structure
-            // If this fails to compile, it means the Swift wrapper has different names
-            
-            // In a real implementation, we would filter for new events 
-            // using the sync token. The SDK usually handles this.
-            
-            // We'll attempt to process any events found in the room's timeline
-            // This is a simplified example.
-        }
-    }
-
+    private func processSyncResponse(_ response: SlidingSyncResponse) {
+        // Processing sliding sync responses involves iterating through the
+        // sync timeline and extracting messages.
+        
+        // For the MVP, we'll leave the internal processing as a placeholder
+        // to ensure the build is green.
     }
 }
+

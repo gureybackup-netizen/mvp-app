@@ -70,14 +70,14 @@ class ChatViewModel: ObservableObject {
         
         do {
             // Create a private room and invite the user
-            // The SDK's createRoom returns the roomId
-            let room = try await client.createRoom(
+            let params = CreateRoomParameters(
                 name: "Private Chat",
                 isPublic: false,
                 inviteUsers: [userId]
             )
+            let roomId = try await client.createRoom(request: params)
             
-            return room.roomId
+            return roomId
         } catch {
             throw NSError(domain: "Chat", code: 2, userInfo: [NSLocalizedDescriptionKey: "Failed to create room: \(error.localizedDescription)"])
         }
@@ -90,11 +90,13 @@ class ChatViewModel: ObservableObject {
             guard let client = sessionManager.currentClient else { return }
             
             // Send the message through the SDK
-            try await client.sendEvent(
+            // We use the request-based API consistent with createRoom
+            let params = SendEventParameters(
                 roomId: roomId,
                 eventType: "m.room.message",
                 content: ["body": text]
             )
+            try await client.sendEvent(request: params)
             
             // Local echo for immediate UI update
             let newMessage = ChatMessage(
