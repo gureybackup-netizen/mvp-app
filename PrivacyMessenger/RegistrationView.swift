@@ -5,6 +5,7 @@ struct RegistrationView: View {
     @State private var username = ""
     @State private var password = ""
     @State private var confirmPassword = ""
+    @State private var email = ""
     
     var body: some View {
         VStack(spacing: 20) {
@@ -12,25 +13,38 @@ struct RegistrationView: View {
                 .font(.largeTitle)
                 .bold()
             
-            TextField("Username", text: $username)
-                .textFieldStyle(.roundedBorder)
-                .textInputAutocapitalization(.never)
-            
-            SecureField("Password", text: $password)
-                .textFieldStyle(.roundedBorder)
-            
-            SecureField("Confirm Password", text: $confirmPassword)
-                .textFieldStyle(.roundedBorder)
+            VStack(spacing: 15) {
+                TextField("Username", text: $username)
+                    .textFieldStyle(.roundedBorder)
+                    .textInputAutocapitalization(.never)
+                
+                SecureField("Password", text: $password)
+                    .textFieldStyle(.roundedBorder)
+                
+                SecureField("Confirm Password", text: $confirmPassword)
+                    .textFieldStyle(.roundedBorder)
+                
+                // Dynamic Email Field: Only shows when server requires it
+                if viewModel.registrationState == .awaitingEmail {
+                    TextField("Email Address", text: $email)
+                        .textFieldStyle(.roundedBorder)
+                        .textInputAutocapitalization(.never)
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                }
+            }
             
             if let error = viewModel.errorMessage {
                 Text(error)
                     .foregroundColor(.red)
                     .font(.caption)
+                    .multilineTextAlignment(.center)
             }
             
             Button(action: {
                 Task {
-                    await viewModel.register(username: username, password: password)
+                    // Pass email if the state requires it
+                    let userEmail = (viewModel.registrationState == .awaitingEmail) ? email : nil
+                    await viewModel.register(username: username, password: password, email: userEmail)
                 }
             }) {
                 if viewModel.isLoading {
@@ -50,5 +64,6 @@ struct RegistrationView: View {
                 .font(.footnote)
         }
         .padding()
+        .animation(.spring(), value: viewModel.registrationState)
     }
 }
