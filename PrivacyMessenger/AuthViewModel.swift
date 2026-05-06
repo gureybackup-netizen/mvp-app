@@ -32,7 +32,8 @@ class AuthViewModel: ObservableObject {
         
         do {
             let client = try await createClient()
-            try await client.login(username: username, password: password, initialDeviceName: "PrivacyMessenger", deviceId: nil)
+            // Fixed: deviceId must be a String, not nil
+            try await client.login(username: username, password: password, initialDeviceName: "PrivacyMessenger", deviceId: "")
             
             let session = try client.session()
             sessionManager.currentClient = client
@@ -51,11 +52,12 @@ class AuthViewModel: ObservableObject {
         do {
             let client = try await createClient()
             
+            // Fixed: deviceId and refreshToken must be Strings, not nil
             let session = Session(
                 accessToken: token,
-                refreshToken: nil,
+                refreshToken: "",
                 userId: userId,
-                deviceId: nil,
+                deviceId: "",
                 homeserverUrl: homeserverUrl,
                 oidcData: nil,
                 slidingSyncVersion: .native

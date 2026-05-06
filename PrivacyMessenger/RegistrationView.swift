@@ -14,7 +14,6 @@ struct RegistrationView: View {
             
             TextField("Username", text: $username)
                 .textFieldStyle(.roundedBorder)
-                .autocapitalization(.none)
                 .textInputAutocapitalization(.never)
             
             SecureField("Password", text: $password)
