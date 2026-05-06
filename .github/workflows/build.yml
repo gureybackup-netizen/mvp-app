@@ -36,15 +36,15 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_IDENTITY=""
 
-       - name: Package IPA
-         run: |
-           mkdir -p Payload
-           cp -r build/Build/Products/Release-iphoneos/PrivacyMessenger.app Payload/
-           zip -r vard-app.ipa Payload/
+      - name: Package IPA
+        run: |
+          mkdir -p Payload
+          cp -r build/Build/Products/Release-iphoneos/PrivacyMessenger.app Payload/
+          zip -r vard-app.ipa Payload/
  
-       - name: Upload Artifact
-         uses: actions/upload-artifact@v4
-         with:
-           name: vard-app-IPA
-           path: vard-app.ipa
-           retention-days: 30
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vard-app-IPA
+          path: vard-app.ipa
+          retention-days: 30
