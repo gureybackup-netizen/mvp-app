@@ -3,7 +3,7 @@ import MatrixRustSDK
 
 class SessionManager {
     static let shared = SessionManager()
-    var currentClient: MatrixClient?
+    var currentClient: Client?
     
     private let serviceName = "com.vardchat.app.auth"
     
